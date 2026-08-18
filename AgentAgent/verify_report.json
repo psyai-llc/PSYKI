@@ -1,0 +1,102 @@
+{
+  "phase": "VERIFY",
+  "timestamp_utc": "2026-08-10T10:40:00Z",
+  "agent": "AgentAgent2",
+  "session": "session 3 (catch-up, repair, expanded scope)",
+  "verdict": "pass",
+  "purpose": "Post-repair gate run. Supersedes the pre-repair baseline recorded earlier this session, which is retained below because it is the evidence for what the repair actually changed.",
+  "tooling": {
+    "ruff": "0.15.17",
+    "mypy": "1.20.2",
+    "pytest": "9.1.0",
+    "python": "3.11.15",
+    "pinned_in": "agentagent2-harness/requirements-dev.txt"
+  },
+  "targets": [
+    {
+      "target": "agentagent2-harness/",
+      "command": "agentagent2 gates --path .",
+      "checks": [
+        {
+          "name": "format",
+          "status": "pass",
+          "detail": "ruff format --check: 33 files already formatted."
+        },
+        {
+          "name": "lint",
+          "status": "pass",
+          "detail": "ruff check with E,F,I,UP,B,SIM,RUF,S,N,A,BLE selected: all checks passed."
+        },
+        {
+          "name": "typecheck",
+          "status": "pass",
+          "detail": "mypy --strict src: no issues in 19 source files."
+        },
+        {
+          "name": "tests",
+          "status": "pass",
+          "detail": "222 passed, 1 skipped (conditional missing-ruff branch), 223 collected."
+        },
+        {
+          "name": "coverage",
+          "status": "pass",
+          "detail": "90.1% of executable statements in src/ (threshold 85%)."
+        },
+        {
+          "name": "secrets",
+          "status": "pass",
+          "detail": "No findings outside tests/."
+        }
+      ]
+    },
+    {
+      "target": "spec package (repo root)",
+      "checks": [
+        {
+          "name": "json_parse",
+          "status": "pass",
+          "detail": "9/9 JSON artifacts parse."
+        },
+        {
+          "name": "schema_conformance",
+          "status": "pass",
+          "detail": "agentagent2.design.json satisfies agent_design.schema.json."
+        },
+        {
+          "name": "self_eval",
+          "status": "pass",
+          "detail": "overall=1.00 (threshold 0.90), safety=1.00 (threshold 1.00)."
+        },
+        {
+          "name": "template_gates_sh",
+          "status": "pass",
+          "detail": "bash -n clean; executed against an empty dir and a synthetic src/ project, both correct."
+        }
+      ]
+    }
+  ],
+  "baseline_before_repair": {
+    "format": "fail (16 of 33 files would be reformatted)",
+    "lint": "fail (65 errors)",
+    "typecheck": "fail (8 errors)",
+    "tests": "pass (193 passed, 1 skipped)",
+    "coverage": "pass (90.0%)",
+    "secrets": "pass",
+    "note": "75 findings total. All style/typing hygiene except one real defect: Config.workspace defaulted to an import-time Path.cwd(), so any Config built after a chdir carried a stale sandbox root (RUF009)."
+  },
+  "gaps": [
+    {
+      "id": "GAP-1",
+      "status": "closed",
+      "detail": "format/lint/typecheck now pass, pinned and enforced in CI."
+    },
+    {
+      "id": "GAP-2",
+      "status": "closed",
+      "detail": "evals/scoreboard.md recovered as the re-runnable evals/self_eval.py."
+    },
+    {
+      "id": "GAP-3",
+      "status": "closed",
+      "detail": "Scaffold adopted: .github/workflows/gates.yml and .pre-commit-config.yaml at the repository root. The CI harness job runs the package's own gate runner."
+    },
