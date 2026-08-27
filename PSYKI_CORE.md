@@ -1,12 +1,10 @@
-# PSYKI — Core Architecture
+# PSYKEY — Core Architecture
 
-**Status:** canonical. Supersedes `psyai-llc/PSYKI` (v0 sketch) and
-`mypsyai/AgentAgent2` (quarry). Where any repo disagrees with this document,
-this document wins and the repo gets reshaped.
+**Truth-Structure:** neo-canonical (the truth for this repo is still developing, it can be asked that the most recent file supersedes previous files in the event of conflicting information.
 
-**Provenance:** derived from design session 2026-08-21. Nothing here is
-inherited unexamined from prior authorship.
+**Provenance:** truth is the root of trust, and truth is never assumed it must be proven and evaluated. Truth os not Boolean it is a floating point derived from consistent evaluation. Nothing here is inherited unexamined from prior authorship.
 
+**Standards:** A common Agentic protocol is formed through the Procedures of Operation, and agent 
 ---
 
 ## 0. Shape
@@ -26,7 +24,7 @@ Three reasoning components. Everything else is deterministic code.
 | Retinue | **code** | agent code indexed by toolset signature. Hash-pinned. |
 | OpProcs | **code** | read-only charter. Hash-verified on every read. |
 
-**Trust hierarchy:** `OpProcs ≻ Wall ≻ Log`. A directive contradicting OpProcs
+**Trust hierarchy:** `ProcOps ≻ Wall ≻ Log`. A directive contradicting ProcOps
 is voided, not negotiated. A log record never overrides a Wall directive.
 
 ---
