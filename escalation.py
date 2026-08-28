@@ -9,7 +9,7 @@ spins forever.
   Tier 2  tier-1 budget exhausted       PSY replans the objective
   Tier 3  replan budget exceeded        Emissary returns to the USER
 
-Tier 3 has no budget. It is the floor. Budgets live in OpProcs, not here, so
+Tier 3 has no budget. It is the floor. Budgets live in ProcOps, not here, so
 the system cannot widen its own leash.
 
 Ambiguous debrief also lands at tier 3: there is no user to interrogate on the
@@ -34,7 +34,7 @@ class Tier(str, Enum):
 
 @dataclass(frozen=True)
 class Budgets:
-    """Mirror of OpProcs['escalation']."""
+    """Mirror of ProcOps['escalation']."""
     tier1_retry: int = 2
     tier2_replan: int = 3
 

@@ -35,7 +35,7 @@ class Decision(str, Enum):
 
 class Reason(str, Enum):
     OK = "OK"
-    CHARTER_DRIFT = "CHARTER_DRIFT"          # opprocs hash changed under plan
+    CHARTER_DRIFT = "CHARTER_DRIFT"          # procops hash changed under plan
     WALL_REVISED = "WALL_REVISED"            # intent moved since planning
     TOOLSET_HELD = "TOOLSET_HELD"            # another contract owns the tools
     NO_AGENT = "NO_AGENT"                    # pool exhausted
@@ -60,7 +60,7 @@ class KiRuling:
 
 @dataclass(frozen=True)
 class KiPolicy:
-    """Lives in OpProcs, not in KI's discretion. (I5)"""
+    """Lives in ProcOps, not in KI's discretion. (I5)"""
     max_plan_age_revs: int = 32
     max_queue_depth: int = 8
     wall_revision_invalidates: bool = True
@@ -69,7 +69,7 @@ class KiPolicy:
 # -------------------------------------------------------------- certificate
 
 def mint_certificate_id(
-    task_id: str, state_rev: int, opprocs_hash: str
+    task_id: str, state_rev: int, procops_hash: str
 ) -> str:
     """Deterministic. No RNG anywhere in KI. (I3)"""
     h = hashlib.blake2b(digest_size=16)
@@ -77,7 +77,7 @@ def mint_certificate_id(
     h.update(b"\x00")
     h.update(str(state_rev).encode("ascii"))
     h.update(b"\x00")
-    h.update(opprocs_hash.encode("utf-8"))
+    h.update(procops_hash.encode("utf-8"))
     return h.hexdigest()
 
 
@@ -87,7 +87,7 @@ def admit(
     snapshot: StateSnapshot,
     task: Task,
     policy: KiPolicy = KiPolicy(),
-    plan_opprocs_hash: str = "",
+    plan_procops_hash: str = "",
     plan_wall_rev: int = -1,
 ) -> KiRuling:
     """Should this task be admitted right now?
@@ -100,7 +100,7 @@ def admit(
         return KiRuling(Decision.REFUSE, reason, task.task_id, rev)
 
     # charter first — a plan authored under a different charter is void (I5)
-    if plan_opprocs_hash and plan_opprocs_hash != snapshot.opprocs_hash:
+    if plan_procops_hash and plan_procops_hash != snapshot.procops_hash:
         return no(Reason.CHARTER_DRIFT)
 
     # intent freshness: the user changed their mind while PSY was planning
@@ -137,10 +137,10 @@ def admit(
 
     cert = Certificate(
         certificate_id=mint_certificate_id(
-            task.task_id, rev, snapshot.opprocs_hash),
+            task.task_id, rev, snapshot.procops_hash),
         task_id=task.task_id,
         issued_at_rev=rev,
-        opprocs_hash=snapshot.opprocs_hash,
+        procops_hash=snapshot.procops_hash,
     )
     return KiRuling(Decision.ADMIT, Reason.OK, task.task_id, rev, cert)
 
@@ -172,7 +172,7 @@ def tick(
     if cid not in snapshot.certificates_outstanding:
         return KiRuling(Decision.REVOKE, Reason.UNKNOWN_CERTIFICATE, cid, rev)
 
-    if certificate.opprocs_hash != snapshot.opprocs_hash:
+    if certificate.procops_hash != snapshot.procops_hash:
         return KiRuling(Decision.REVOKE, Reason.CHARTER_DRIFT, cid, rev)
 
     if _over_ceiling(snapshot):

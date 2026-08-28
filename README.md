@@ -20,9 +20,9 @@ These are load-bearing. Violating any one collapses the security or determinism 
 | I2 | Ki's context is **exactly** `MCPState` (plus the immutable `Plan` it consumes). | `Ki.on_event` signature; no I/O inside |
 | I3 | Ki's output is **deterministic**: `f(state, plan, event) → bytes` is a pure total function. | property test `test_determinism.py`; no RNG, no wall-clock, total tie-order |
 | I4 | Any nondeterministic/generative work is a `SubagentSpec` *inside* an `Initiation`. Ki never calls a model. | no backend field on `Ki` |
-| I5 | Operating Procedures are read-only and content-pinned. The server cannot author them. | `OpProcs.load()` returns frozen; hash checked each read |
+| I5 | Operating Procedures are read-only and content-pinned. The server cannot author them. | `ProcOps.load()` returns frozen; hash checked each read |
 | I6 | Wall entries reaching the Agenda have passed `taste_test`. Untasted bytes never touch Psy. | `Wall.append()` is the only writer; requires `TasteVerdict.ADMIT` |
-| I7 | Wall directives contradicting OpProcs are **voided**, not negotiated. | `Agenda.compose()` conflict rule |
+| I7 | Wall directives contradicting ProcOps are **voided**, not negotiated. | `Agenda.compose()` conflict rule |
 | I8 | Objectives with no traceable `directive_id` are rejected at plan validation. | `Plan.validate()` |
 
 ---
@@ -63,7 +63,7 @@ The split is not stylistic. It is the cortico-subcortical division, and it buys 
 
 | Neuroanatomy | PSYKI component | Property bought |
 |---|---|---|
-| Genome / developmental constraint | `OpProcs` (read-only, hash-pinned) | system cannot rewrite its own charter |
+| Genome / developmental constraint | `ProcOps` (read-only, hash-pinned) | system cannot rewrite its own charter |
 | Interoceptive drive (hypothalamus) | `Wall` (encrypted token sequence) | user intent as a *drive*, not an instruction stream |
 | Blood-brain barrier / gustatory aversion | `taste_test` | injection never becomes drive |
 | Neocortex L2/3 (deliberation) | `Psy.plan()` | slow, expensive, generative, scheduled |
@@ -141,7 +141,7 @@ tokens to satisfy the Wall; Ki will refuse to. The tension is the governor.
 |---|---|---|
 | Prompt injection via tool output | Tool outputs enter `MCPState` as typed fields only; free text is `str` but never interpolated as instruction — Psy's renderer emits it inside a fenced, labelled `UNTRUSTED_OBSERVATION` block | I1 |
 | Injection via Wall | `taste_test` at certified endpoint: origin signature, imperative-pattern screen, op-proc compliance, entropy/length anomaly | I6 |
-| Self-modifying charter | OpProcs read-only + hash pin verified on every read; drift → `HALT` | I5 |
+| Self-modifying charter | ProcOps read-only + hash pin verified on every read; drift → `HALT` | I5 |
 | Ki subversion | Ki reads no text. Its inputs are numeric/enum. Determinism test is a CI gate | I2, I3 |
 | Runaway spend | Homeostatic budget + STN global stop on conflict spikes | — |
 | Objective laundering (plan contains work nobody asked for) | Every objective carries `directive_id`; orphans rejected | I8 |
@@ -158,7 +158,7 @@ psyki/
   types.py      # frozen schemas + canonical serialization
   neuro.py      # ALIF, BasalGangliaGate, Neuromod, SDRRouter, HomeostaticBudget,
                 #   EligibilityCredit, DeltaContext, replay consolidation
-  agenda.py     # OpProcs (read-only), Wall (append-only), taste_test, Agenda.compose
+  agenda.py     # ProcOps (read-only), Wall (append-only), taste_test, Agenda.compose
   psy.py        # SealedContext, Psy, PlannerBackend protocol, plan validation
   ki.py         # Ki (pure), Initiation emission, allocator
   bus.py        # AER-style async event bus
@@ -191,11 +191,11 @@ changes no metric was metaphor, and gets deleted. This is the rule that keeps th
 ## 7. Phased rollout
 
 - **P0** — types + bus + determinism CI gate. Ki emits initiations against a hand-written plan.
-- **P1** — OpProcs/Wall/taste_test/Agenda. Psy with `NullPlanner` (deterministic stub) end-to-end.
+- **P1** — ProcOps/Wall/taste_test/Agenda. Psy with `NullPlanner` (deterministic stub) end-to-end.
 - **P2** — real `PlannerBackend`; SealedContext audit (assert prompt bytes ⊆ ctx bytes).
 - **P3** — neuromod + BG + ALIF live; run every ablation.
 - **P4** — delta context + replay consolidation; token accounting.
-- **P5** — auto-evolution: Psy authors objectives that modify server settings via Ki; OpProcs
+- **P5** — auto-evolution: Psy authors objectives that modify server settings via Ki; ProcOps
   still immutable. This is the only phase where the system edits itself, and it is gated on
   P0–P4 metrics holding.
 

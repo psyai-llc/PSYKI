@@ -25,7 +25,7 @@ from psyki.wall import DevCipher, Wall
 
 def _core() -> ServerCore:
     c = ServerCore(ceilings=Ceilings(gpu=100, memory=100))
-    c.bind_opprocs("charter-abc")
+    c.bind_procops("charter-abc")
     c.register_agents(["agent-1"])
     c.fold()
     return c
@@ -70,7 +70,7 @@ def test_ki_is_total():
 
 def test_charter_drift_refused():
     snap = _core().snapshot()
-    r = ki.admit(snap, _task(), plan_opprocs_hash="charter-OLD")
+    r = ki.admit(snap, _task(), plan_procops_hash="charter-OLD")
     assert r.decision is ki.Decision.REFUSE
     assert r.reason is ki.Reason.CHARTER_DRIFT
 

@@ -162,7 +162,7 @@ class Certificate:
     certificate_id: str
     task_id: str
     issued_at_rev: int
-    opprocs_hash: str
+    procops_hash: str
 
 
 @dataclass(frozen=True)
@@ -219,7 +219,7 @@ class StateSnapshot:
     """Frozen projection. KI's determinism is over this, not the live struct.
     (I12) Every field is scalar or enum — no prose ever enters State."""
     state_rev: int
-    opprocs_hash: str
+    procops_hash: str
     wall_rev: int                 # revision ONLY, never Wall contents
     log_head: int
     recent_verdicts: tuple[Verdict, ...] = ()

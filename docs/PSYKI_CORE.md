@@ -22,7 +22,7 @@ Three reasoning components. Everything else is deterministic code.
 | Wall | **code** | encrypted, user-authored, append-only. |
 | Log | **code** | server events + contract records. Bounded depth. |
 | Retinue | **code** | agent code indexed by toolset signature. Hash-pinned. |
-| OpProcs | **code** | read-only charter. Hash-verified on every read. |
+| ProcOps | **code** | read-only charter. Hash-verified on every read. |
 
 **Trust hierarchy:** `ProcOps ≻ Wall ≻ Log`. A directive contradicting ProcOps
 is voided, not negotiated. A log record never overrides a Wall directive.
@@ -35,7 +35,7 @@ is voided, not negotiated. A log record never overrides a Wall directive.
   user NL ──▶ EMISSARY ──enum──▶ TasteTester ──▶ WALL
                   ▲                                │
                   │                                ▼
-                  │              OpProcs ──▶ [Wall + State + History]
+                  │              ProcOps ──▶ [Wall + State + History]
                   │                                │
                   │                                ▼
                   │                              PSY
@@ -81,7 +81,7 @@ compromised Emissary can only express what the vocabulary allows.
 | **I2** | KI's context is exactly `(State, Plan, Event)`. No history, no future. |
 | **I3** | KI is a pure total function. No RNG, no wall-clock, no model call. |
 | **I4** | No prose crosses any internal boundary. Enum + typed fields only. |
-| **I5** | OpProcs is read-only and hash-pinned. The server cannot author its charter. |
+| **I5** | ProcOps is read-only and hash-pinned. The server cannot author its charter. |
 | **I6** | Only TasteTester-admitted bytes reach the Wall. |
 | **I7** | Every objective carries a traceable `directive_id`. Orphans rejected at plan validation. |
 | **I8** | A task is bounded by its toolset. Fan-out is internal to a task. |
@@ -218,7 +218,7 @@ Every field is scalar or enum. No prose ever enters State.
 ```
 State {
   state_rev               # monotonic; the freshness anchor
-  opprocs_hash            # I5 verification
+  procops_hash            # I5 verification
 
   wall_rev                # revision number ONLY — never Wall contents
   log_head
@@ -303,7 +303,7 @@ Duplicate `(1)` files, `agentagent2-complete.zip`, session-event JSON at public
 root, `verify_report*.json`. Do not inherit the hygiene.
 
 ### From PSYKI v0 — take
-- OpProcs concept (read-only hash-pinned charter)
+- ProcOps concept (read-only hash-pinned charter)
 - KI determinism harness and CI gate
 - Lateral-inhibition fix in the BG gate (Buridan deadlock)
 - Sealed-context whitespace→word-boundary audit fix
@@ -328,4 +328,4 @@ root, `verify_report*.json`. Do not inherit the hygiene.
    silent failure. Needs a tool-version component in the signature.
 4. **Auto-evolution** — deferred. A system with a return path that rewrites its
    own settings observes its own effects. Gate behind the replan counter and
-   the escalation tiers, not just metrics. OpProcs stays immutable regardless.
+   the escalation tiers, not just metrics. ProcOps stays immutable regardless.

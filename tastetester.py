@@ -19,7 +19,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 
-from .opprocs import OpProcs
+from .procops import ProcOps
 from .types import Directive, Scope, Urgency, Verb
 
 MAX_TARGETS = 4096
@@ -53,7 +53,7 @@ class Tasting:
     detail: str = ""
 
 
-def taste(directive: Directive, charter: OpProcs | None = None) -> Tasting:
+def taste(directive: Directive, charter: ProcOps | None = None) -> Tasting:
     """Pure. Same directive, same verdict, always."""
 
     def no(fault: Fault, detail: str = "") -> Tasting:

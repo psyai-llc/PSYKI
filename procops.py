@@ -1,10 +1,10 @@
 """
-psyki.opprocs — the charter.
+psyki.procops — the charter.
 
 Read-only, hash-verified on every read. (I5) The server cannot author its own
-charter; a Wall directive contradicting OpProcs is VOIDED, not negotiated.
+charter; a Wall directive contradicting ProcOps is VOIDED, not negotiated.
 
-Trust hierarchy: OpProcs > Wall > Log.
+Trust hierarchy: ProcOps > Wall > Log.
 
 This is also what makes the closed loop safe. Emissary -> Wall -> PSY -> KI ->
 AgentAgent -> execution -> Emissary has no human in it. Cadence, budgets, and
@@ -26,7 +26,7 @@ class CharterViolation(Exception):
 
 
 @dataclass(frozen=True)
-class OpProcs:
+class ProcOps:
     path: Path
     pinned_hash: str
     _body: dict[str, Any]
@@ -39,7 +39,7 @@ class OpProcs:
             path.read_bytes(), digest_size=32).hexdigest()
 
     @classmethod
-    def load(cls, path: str | Path, pinned_hash: str) -> "OpProcs":
+    def load(cls, path: str | Path, pinned_hash: str) -> "ProcOps":
         p = Path(path)
         actual = cls.hash_file(p)
         if actual != pinned_hash:

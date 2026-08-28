@@ -31,7 +31,7 @@ class ServerCore:
         self._recent_depth = recent_depth
 
         self._rev = 0
-        self._opprocs_hash = ""
+        self._procops_hash = ""
         self._wall_rev = 0
         self._log_head = 0
         self._recent: deque[Verdict] = deque(maxlen=recent_depth)
@@ -117,7 +117,7 @@ class ServerCore:
         with self._lock:
             return StateSnapshot(
                 state_rev=self._rev,
-                opprocs_hash=self._opprocs_hash,
+                procops_hash=self._procops_hash,
                 wall_rev=self._wall_rev,
                 log_head=self._log_head,
                 recent_verdicts=tuple(self._recent),
@@ -130,10 +130,10 @@ class ServerCore:
                 usage=self._usage,
             )
 
-    def bind_opprocs(self, opprocs_hash: str) -> None:
+    def bind_procops(self, procops_hash: str) -> None:
         """Set once at boot from the verified charter. (I5)"""
         with self._lock:
-            self._opprocs_hash = opprocs_hash
+            self._procops_hash = procops_hash
 
     def register_agents(self, refs: Iterable[str]) -> None:
         with self._lock:
