@@ -1,0 +1,64 @@
+name: gates
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+# One run per branch. A superseded run is cancelled rather than left to
+# report on a tree that no longer exists.
+concurrency:
+  group: gates-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  structure:
+    name: structural invariants
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0          # test_repo_structure.py shells out to git ls-files
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install pytest
+      - run: python -m pytest tests/test_repo_structure.py -v
+
+  determinism:
+    name: I3 — KI determinism
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install pytest
+      - name: no nondeterminism imports in ki
+        run: |
+          # I3: KI is a pure total function. No RNG, no wall-clock, no model call.
+          # A grep is weaker than an AST check and is a placeholder until R1.3
+          # lands the real one — but it catches the accident, which is the
+          # failure mode that actually happens.
+          if grep -nE '^\s*(import|from)\s+(random|time|datetime|secrets|uuid|requests|httpx|socket)\b' psyki/ki.py; then
+            echo "::error file=psyki/ki.py::I3 violation — nondeterminism import in KI"
+            exit 1
+          fi
+      - run: python -m pytest tests/test_determinism.py -v
+
+  suite:
+    name: full test suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install pytest
+      - run: python -m pytest tests/ -v
