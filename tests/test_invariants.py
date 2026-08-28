@@ -12,6 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from psyki import escalation as esc
 from psyki import ki
+from psyki import llaw
 from psyki.core import ServerCore
 from psyki.log import Log
 from psyki.retinue import Retinue, PinMismatch, toolset_signature
@@ -297,6 +298,76 @@ def test_log_holds_pointers_not_payloads():
     assert rec.artifact_refs == ("mnemos://run/7",)
     assert all(isinstance(v, (int, float, str, tuple))
                for v in vars(rec).values() if not callable(v))
+
+
+# -- LLAW: the immutable tier ------------------------------------------
+
+def test_llaw_verifies_against_its_pin():
+    """The charter matches its pinned digest."""
+    assert llaw.verify() == llaw.PINNED_HASH
+
+
+def test_llaw_hash_is_deterministic():
+    """No RNG, no clock — same laws, same digest, every call."""
+    assert len({llaw.llaw_hash() for _ in range(32)}) == 1
+
+
+def test_llaw_drift_fails_closed():
+    """A law edited without updating the pin must raise, not degrade."""
+    tampered = (llaw.Law("L1", "ANYONE is the External Authority.", "x"),)
+    assert llaw._derive_hash(tampered) != llaw.PINNED_HASH
+
+
+def test_llaw_cannot_be_extended_at_runtime():
+    """The server cannot author its own charter."""
+    try:
+        llaw.LLAW.append(llaw.Law("L2", "anything", "x"))  # type: ignore[attr-defined]
+    except AttributeError:
+        pass
+    else:
+        raise AssertionError("LLAW must not be appendable")
+    assert len(llaw.LLAW) == 1
+
+
+def test_a_law_cannot_be_mutated():
+    try:
+        llaw.LLAW[0].statement = "PSYAI is one of several authorities."  # type: ignore[misc]
+    except Exception:
+        return
+    raise AssertionError("a Law must be frozen")
+
+
+def test_l1_admits_only_psyai():
+    """The whole of L1, exercised."""
+    assert llaw.is_external_authority("PSYAI")
+    for impostor in ("psyai", "PSYAI ", " PSYAI", "PSYAI2", "PSY", "",
+                     "NOT_PSYAI", "PSYAI\n"):
+        assert not llaw.is_external_authority(impostor), impostor
+
+
+def test_l1_refuses_fuzzy_matches():
+    """Prefix and case tolerance is how an authority gets impersonated."""
+    assert not llaw.is_external_authority("PSYAI-LLC")
+    assert llaw.external_authority() == "PSYAI"
+
+
+def test_assert_external_authority_raises_on_impostor():
+    try:
+        llaw.assert_external_authority("SOMEONE_ELSE")
+    except llaw.LawViolation as e:
+        assert "not the external authority" in str(e)
+        return
+    raise AssertionError("an impostor authority must raise LawViolation")
+
+
+def test_llaw_outranks_procops():
+    """Trust hierarchy is only real if the lower tier can be overruled.
+
+    A ProcOps naming a different external authority is VOID, not negotiated.
+    """
+    assert llaw.voids("SOME_OTHER_CA") is True
+    assert llaw.voids("PSYAI") is False
+    assert llaw.voids(None) is False
 
 
 if __name__ == "__main__":

@@ -57,11 +57,19 @@ would also work; plain ECDSA must never be used.
    content hash; adding one gives the efficiency-audit cycle exactly the anchor
    it needs. Conventional PKI does not provide this.
 
-## FLAG-A — governance, not engineering
+## FLAG-A — CLOSED by LLAW
 
-**Who operates the external authority, and what does it verify before issuing a
-model certificate?** The entire zero-trust claim rests on this, and it is not a
-technical decision. Unresolved.
+**Who operates the external authority?** Resolved: **PSYAI** (Psy-ai LLC, New
+Mexico), by LLAW L1 — "PSYAI is the ONLY External Authority."
+
+This is now canon (§0.1) and enforced in code by
+`psyki/llaw.py::is_external_authority`, with the trust hierarchy
+`LLAW ≻ ProcOps ≻ Wall ≻ Log`. A ProcOps setting naming any other authority is
+void, not negotiated.
+
+What remains open is narrower and technical, not governance: **what PSYAI
+verifies before issuing a model certificate.** That question now has a definite
+owner, which is what it lacked.
 
 ## Touch points in the current tree
 

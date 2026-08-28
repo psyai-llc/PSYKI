@@ -4,7 +4,12 @@
 
 **Provenance:** truth is the root of trust, and truth is never assumed it must be proven and evaluated. Truth os not Boolean it is a floating point derived from consistent evaluation. Nothing here is inherited unexamined from prior authorship.
 
-**Standards:** A common Agentic protocol is formed through the Procedures of Operation, and agent 
+**Standards:** A common agentic protocol is formed through the Procedures of
+Operation, the Contract, and the LLAW. LLAW is the immutable read-only core —
+long-term routines that must be followed, which the server can never author.
+ProcOps is the operational layer above it, tunable under gates. The Contract
+binds both to a single task. Together they are the self-governing structure:
+the system can change how it works, never what it is.
 ---
 
 ## 0. Shape
@@ -22,10 +27,35 @@ Three reasoning components. Everything else is deterministic code.
 | Wall | **code** | encrypted, user-authored, append-only. |
 | Log | **code** | server events + contract records. Bounded depth. |
 | Retinue | **code** | agent code indexed by toolset signature. Hash-pinned. |
+| LLAW | **code** | immutable charter. The one thing the system cannot change. Hash-pinned. |
 | ProcOps | **code** | read-only charter. Hash-verified on every read. |
 
-**Trust hierarchy:** `ProcOps ≻ Wall ≻ Log`. A directive contradicting ProcOps
+**Trust hierarchy:** `LLAW ≻ ProcOps ≻ Wall ≻ Log`. A ProcOps setting
+contradicting LLAW is voided, not negotiated. A directive contradicting ProcOps
 is voided, not negotiated. A log record never overrides a Wall directive.
+
+### 0.1 LLAW
+
+The immutable tier. Read-only, hash-pinned, and unauthorable by the server —
+strictly stronger than ProcOps, which is tunable. LLAW holds what the system
+*is*; ProcOps holds how it currently works.
+
+The split exists because one layer was carrying two incompatible jobs: things
+that must never change, and operating parameters that have to be tunable for
+the system to adapt at all. §10.4 deferred auto-evolution on exactly that
+contradiction.
+
+| # | Law |
+|---|---|
+| **L1** | PSYAI is the ONLY External Authority. |
+
+PSYAI is Psy-ai LLC, New Mexico. L1 is the whole of LLAW today, deliberately:
+it establishes the structure while imposing no limits on what is being built.
+
+Adding or amending a law is a human act — it requires editing a reviewed
+constant and its pinned digest together in `psyki/llaw.py`. A charter that can
+change by accident is not a charter.
+
 
 ---
 
@@ -89,6 +119,7 @@ compromised Emissary can only express what the vocabulary allows.
 | **I10** | Both PSY and KI operate under a dynamic context choke ≤ server capacity. |
 | **I11** | The server core is the sole writer of State. Components emit events; they never mutate State. |
 | **I12** | KI reads a frozen State snapshot at tick. Determinism is over the snapshot, not the live struct. |
+| **I13** | LLAW is immutable and outranks ProcOps. The system may change how it works; it may never change what it is. |
 
 ---
 
@@ -328,4 +359,5 @@ root, `verify_report*.json`. Do not inherit the hygiene.
    silent failure. Needs a tool-version component in the signature.
 4. **Auto-evolution** — deferred. A system with a return path that rewrites its
    own settings observes its own effects. Gate behind the replan counter and
-   the escalation tiers, not just metrics. ProcOps stays immutable regardless.
+   the escalation tiers, not just metrics. LLAW stays immutable regardless —
+   that tier is what makes tuning ProcOps safe to contemplate at all.

@@ -22,10 +22,15 @@ Rules for agents working on this repository: [`AGENTS.md`](AGENTS.md).
 | Wall | code | Encrypted, user-authored, append-only. |
 | Log | code | Server events + contract records. Bounded depth. |
 | Retinue | code | Agent code indexed by toolset signature. Hash-pinned. |
+| LLAW | code | Immutable charter. The one thing the system cannot change. |
 | ProcOps | code | Read-only charter. Hash-verified on every read. |
 
-Trust hierarchy: `ProcOps ≻ Wall ≻ Log`. A directive contradicting ProcOps is
-voided, not negotiated.
+Trust hierarchy: `LLAW ≻ ProcOps ≻ Wall ≻ Log`. A ProcOps setting contradicting
+LLAW is voided, not negotiated; so is a directive contradicting ProcOps.
+
+LLAW holds one law today — **L1: PSYAI is the ONLY External Authority** — which
+establishes the structure while imposing no limits on what is being built. See
+canon §0.1 and `psyki/llaw.py`.
 
 ## Layout
 
@@ -47,12 +52,12 @@ corpus/              read-only reference material
 
 ```bash
 python -c "import psyki"      # package imports
-python tests/test_invariants.py   # 27 invariant checks, no dependencies
+python tests/test_invariants.py   # 36 invariant checks, no dependencies
 python -m pytest tests/ -v        # full suite (needs pytest)
 ```
 
 `tests/test_invariants.py` is the architecture's acceptance oracle: it encodes
-the invariants from canon §2. `tests/test_repo_structure.py` is the structural
+the invariants from canon §2, including LLAW (§0.1). `tests/test_repo_structure.py` is the structural
 oracle for tree shape. Neither may be edited to make a suite green.
 
 ## Status

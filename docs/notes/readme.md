@@ -12,5 +12,5 @@ Notes are numbered in the order they were recorded.
 
 | Note | Subject | Status |
 |---|---|---|
-| `01-wall-contention.md` | One Wall, N producers: ordering, rate asymmetry, per-origin budgets. | Open — no producers yet |
-| `02-cryptographic-binding.md` | Signed envelopes, TPM anchoring, model binding strength. | Open — FLAG-A is a governance decision |
+| `01-wall-contention.md` | One Wall, N producers: ordering, rate asymmetry, per-origin budgets. | Deferred — no producers yet; spectral work out of scope |
+| `02-cryptographic-binding.md` | Signed envelopes, TPM anchoring, model binding strength. | Open — FLAG-A closed by LLAW L1 |

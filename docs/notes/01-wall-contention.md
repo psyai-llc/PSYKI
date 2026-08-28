@@ -44,9 +44,14 @@ against the human channel being crowded out by volume.
 | Wall append path | `psyki/wall.py::Wall.append` — no quota, no backpressure |
 | Fold ordering | `psyki/core.py::ServerCore.fold` — one increment per batch, order within batch undefined |
 
-## Open question
+## Out of scope
 
-**Which sense of "spectral"?** RF spectrum, optical/hyperspectral, audio-frequency,
-or spectral in the graph-theory sense — eigenvalue decomposition over the network
-itself? The last is a different claim from the first three and changes the sensor
-and correlation layers completely. Unresolved; do not guess.
+**The Spectral Neural Network lies beyond current scope.** It is tied to
+long-term PSYAI (Psy-ai LLC, New Mexico) goals, not to this build. The
+contention design above stands on its own — it is about many producers on one
+bounded ingress, whatever those producers eventually are.
+
+Recorded so the question is not re-opened by inference: no sensor, scanner, or
+spectral producer is being built now, and the per-origin budget work below is
+therefore **not yet warranted**. Build it when the second producer appears, not
+before.
