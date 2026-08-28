@@ -35,18 +35,11 @@ def tracked_files() -> list[Path]:
 FILES = tracked_files()
 
 PROSE_SUFFIXES = {".md", ".pdf", ".rst", ".txt", ".docx"}
-PORTABLE = re.compile(r"^[a-z0-9._/-]+$")
 
-# Paths exempt from the lowercase-portable rule. Keep this list short and
-# justified; every entry is a place drift can hide.
-PORTABLE_EXEMPT = {
-    "AGENTS.md",
-    "LICENSE",
-    "README.md",
-    "docs/PSYKI_CORE.md",
-    "docs/INVARIANTS.md",
-    "docs/TREE.md",
-}
+# Shell- and Windows-hostile characters. Spaces, colons, parens and ampersands
+# break pipelines and checkouts; case does not. Uppercase is handled separately
+# by the case-collision rule below.
+PORTABLE = re.compile(r"^[A-Za-z0-9._/-]+$")
 
 
 def _rel(paths: list[Path]) -> list[str]:
@@ -122,18 +115,45 @@ def test_no_duplicate_basenames():
 # --------------------------------------------------------------------------
 
 def test_paths_are_portable():
-    offenders = [
-        p for p in FILES
-        if str(p) not in PORTABLE_EXEMPT and not PORTABLE.match(str(p))
-    ]
+    """No shell- or Windows-hostile characters in any tracked path."""
+    offenders = [p for p in FILES if not PORTABLE.match(str(p))]
     assert not offenders, (
-        "Paths must match ^[a-z0-9._/-]+$ (no spaces, colons, parens, capitals): "
+        "Paths must match ^[A-Za-z0-9._/-]+$ (no spaces, colons, parens, ampersands): "
         f"{_rel(offenders)}"
     )
 
 
+def test_paths_survive_lowercasing():
+    """Uppercase is allowed only where lowercasing collides with nothing.
+
+    The real portability hazard is a case-insensitive filesystem (macOS,
+    Windows), where two paths differing only in case are the same path and one
+    silently overwrites the other. Banning uppercase outright was too strong —
+    it forbade README.md and INDEX.md, which this same file requires to exist.
+
+    The rule that actually protects the property: lowercase the whole tree and
+    nothing may be lost.
+    """
+    lowered = Counter(str(p).lower() for p in FILES)
+    collisions = sorted(name for name, count in lowered.items() if count > 1)
+    assert not collisions, (
+        "Paths that collide when lowercased — on a case-insensitive filesystem "
+        f"these overwrite each other: {collisions}"
+    )
+
+
 def test_every_file_has_a_suffix():
-    offenders = [p for p in FILES if not p.suffix and p.name not in {"LICENSE"}]
+    """Extensionless content files hide what they are.
+
+    Two exemptions, both conventions rather than accidents: LICENSE, and
+    dotfiles, where the leading dot is itself the type signal. The original
+    rule caught `agentagent` and `The Phi Model guide` — real offenders — but
+    also banned `.gitignore`, which every Python repo needs.
+    """
+    offenders = [
+        p for p in FILES
+        if not p.suffix and p.name != "LICENSE" and not p.name.startswith(".")
+    ]
     assert not offenders, f"Extensionless files: {_rel(offenders)}"
 
 

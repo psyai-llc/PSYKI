@@ -57,6 +57,12 @@ A commit that leaves the tree unable to import is broken, regardless of what
 else it got right. This is the single most common way this repo has drifted:
 files that are individually excellent and collectively unrunnable.
 
+**Naming:** uppercase is fine. It is only forbidden where lowercasing the path
+would collide with another path — because on a case-insensitive filesystem those
+are one file and one silently eats the other. No spaces, colons, parens, or
+ampersands; they break shells and Windows checkouts. Enforced by
+`tests/test_repo_structure.py`.
+
 ---
 
 ## 4. Evidence, not assertion
@@ -70,6 +76,25 @@ work" and "tests would pass" are failures.
 - Never mark a test `skip` or `xfail` to make a suite green.
 - Never edit an acceptance test to match your implementation. **The test is the
   specification.** If the test is wrong, that is a §8 stop.
+
+### 4a. A test must run the thing it claims to measure
+
+**Hard line.** Every test exercises behaviour: call the function, feed it input,
+assert on what comes back. "Does it produce the desired result when run."
+
+A test that only checks a file exists, a key is present, or a count matches is
+**not** a test of the thing that file was supposed to do. Existence checks are
+legitimate only where existence *is* the property under test — repo structure,
+packaging, config presence — and only when the test says so in its name.
+
+The failure this bans, concretely: a scoring harness where every check is "does
+this file exist," summed into a quality score, with a safety dimension computed
+as `all(other_checks_passed)`. It reports 1.00 forever. It cannot fail. It is a
+gate wearing a gate's clothes and doing none of the work — and a gate that
+cannot say no is a pass-through.
+
+If you cannot write a test that runs the behaviour, say so and stop (§8). Do not
+substitute a proxy and let the number stand in for the property.
 
 ---
 
