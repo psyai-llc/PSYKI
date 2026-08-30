@@ -1,0 +1,825 @@
+{
+  "schema_version": "2.0.0",
+  "_comment": [
+    "The source registry. Endpoints the fetch layer may reach.",
+    "",
+    "NOT a tool list. Adding a source changes no toolset signature and creates",
+    "no new task type, which is why this file can grow without cost.",
+    "",
+    "Nothing is excluded on scope grounds. The MCP cannot assume the scope of",
+    "its own operation, so the registry accommodates rather than pre-judges.",
+    "",
+    "  enabled      reachable today. false = present, documented, inert. A",
+    "               credentialled source cannot be enabled in the committed file",
+    "               because the credential is not here; the proxy layer holds it",
+    "               and flips this at deployment.",
+    "  auth         honest: NONE | API_KEY | BEARER | SERVICE_KEY | JWT | AWS_SIGV4.",
+    "  constraints  markers the policy layer enforces at the point of use.",
+    "",
+    "constraint vocabulary:",
+    "  TIME_WITNESS    contributes a vote to the time quorum. See time_policy.",
+    "  WRITE_EFFECT    has effects in the world. Requires net_call, not net_fetch,",
+    "                  and a contract whose purpose names it.",
+    "  PII             personal data. Lawful basis and retention attach.",
+    "  RATE_FRAGILE    a published limit that gets the deployment blocked if",
+    "                  ignored.",
+    "  LICENCE_REVIEW  output carries terms that must survive into anything",
+    "                  derived from it.",
+    "  COMPOUNDING     one request can consume many credits. Budget by credit,",
+    "                  not by call.",
+    "  MODEL_INFERENCE hosted model access. Reachable by llm_prompt from a",
+    "                  PROVISIONED agent. Never a role binding: TaskMaster owns",
+    "                  role-to-model assignment under binding_strength, and",
+    "                  nothing here can rebind PSY, the Emissary, or AgentAgent."
+  ],
+  "tiers": {
+    "CODE": "Package registries and source hosts.",
+    "SECURITY": "Vulnerability, advisory, and reputation data. Feeds the security gate.",
+    "REFERENCE": "Encyclopaedic, scholarly, and standards material.",
+    "SCIENCE": "Domain databases: genomics, biomedical, clinical.",
+    "DISCOVERY": "Registries of other services, for adapting to an external protocol.",
+    "IDENTITY": "Authentication and organisation management.",
+    "COMMS": "Mail and messaging.",
+    "FINANCIAL": "Market, rate, and banking data.",
+    "AI": "Hosted inference and media transformation.",
+    "BUSINESS": "Company, domain, and brand data.",
+    "MEDIA": "Image, icon, and collection sources.",
+    "LOCALIZATION": "Geography, holidays, timezone, weather, astronomy."
+  },
+  "sources": [
+    {
+      "id": "github_raw",
+      "name": "GitHub raw content",
+      "base_url": "https://raw.githubusercontent.com",
+      "tier": "CODE",
+      "auth": "NONE",
+      "enabled": true,
+      "rate_limit": "unspecified; treat as 60/min",
+      "cache_ttl_s": 300,
+      "fallback": null,
+      "constraints": [],
+      "notes": "Fetch at a pinned ref. Prefer a commit SHA over a branch name."
+    },
+    {
+      "id": "github_api",
+      "name": "GitHub REST API",
+      "base_url": "https://api.github.com",
+      "tier": "CODE",
+      "auth": "NONE",
+      "enabled": true,
+      "rate_limit": "60/hour unauthenticated",
+      "cache_ttl_s": 300,
+      "fallback": "github_raw",
+      "constraints": [
+        "RATE_FRAGILE"
+      ],
+      "notes": "60/hour is exhaustible in one build. A token raises it to 5000/hour."
+    },
+    {
+      "id": "pypi",
+      "name": "PyPI JSON API",
+      "base_url": "https://pypi.org/pypi",
+      "tier": "CODE",
+      "auth": "NONE",
+      "enabled": true,
+      "rate_limit": "none published",
+      "cache_ttl_s": 3600,
+      "fallback": null,
+      "constraints": [],
+      "notes": null
+    },
+    {
+      "id": "npm_registry",
+      "name": "npm registry",
+      "base_url": "https://registry.npmjs.org",
+      "tier": "CODE",
+      "auth": "NONE",
+      "enabled": true,
+      "rate_limit": "none published",
+      "cache_ttl_s": 3600,
+      "fallback": null,
+      "constraints": [],
+      "notes": null
+    },
+    {
+      "id": "crates_io",
+      "name": "crates.io API",
+      "base_url": "https://crates.io/api/v1",
+      "tier": "CODE",
+      "auth": "NONE",
+      "enabled": true,
+      "rate_limit": "1/sec, User-Agent required",
+      "cache_ttl_s": 3600,
+      "fallback": null,
+      "constraints": [
+        "RATE_FRAGILE"
+      ],
+      "notes": "Rejects requests without a descriptive User-Agent."
+    },
+    {
+      "id": "go_proxy",
+      "name": "Go module proxy",
+      "base_url": "https://proxy.golang.org",
+      "tier": "CODE",
+      "auth": "NONE",
+      "enabled": true,
+      "rate_limit": "none published",
+      "cache_ttl_s": 3600,
+      "fallback": null,
+      "constraints": [],
+      "notes": null
+    },
+    {
+      "id": "osv",
+      "name": "OSV vulnerability database",
+      "base_url": "https://api.osv.dev",
+      "tier": "SECURITY",
+      "auth": "NONE",
+      "enabled": true,
+      "rate_limit": "none published",
+      "cache_ttl_s": 1800,
+      "fallback": "deps_dev",
+      "constraints": [],
+      "notes": "Queryable by package and version. Without this the security gate is checking nothing."
+    },
+    {
+      "id": "deps_dev",
+      "name": "deps.dev API",
+      "base_url": "https://api.deps.dev",
+      "tier": "SECURITY",
+      "auth": "NONE",
+      "enabled": true,
+      "rate_limit": "none published",
+      "cache_ttl_s": 3600,
+      "fallback": null,
+      "constraints": [],
+      "notes": "Cross-ecosystem dependency graphs, licences, advisories. Covers all five style languages from one interface."
+    },
+    {
+      "id": "security_urlhaus",
+      "name": "URLhaus",
+      "base_url": "https://urlhaus-api.abuse.ch/v1",
+      "tier": "SECURITY",
+      "auth": "NONE",
+      "enabled": true,
+      "rate_limit": "unspecified",
+      "cache_ttl_s": 1800,
+      "fallback": null,
+      "constraints": [],
+      "notes": "Keyless malicious-URL feed. Covers part of the safe-browsing job with no credential."
+    },
+    {
+      "id": "security_safe_browsing",
+      "name": "Google Safe Browsing",
+      "base_url": "https://safebrowsing.googleapis.com/v4",
+      "tier": "SECURITY",
+      "auth": "API_KEY",
+      "enabled": false,
+      "rate_limit": "10000/day",
+      "cache_ttl_s": 1800,
+      "fallback": "security_urlhaus",
+      "constraints": [],
+      "notes": "URL reputation before browse. Worth a key: the browser tool is the highest-risk egress path in the manifest."
+    },
+    {
+      "id": "wikipedia_rest",
+      "name": "Wikipedia REST",
+      "base_url": "https://en.wikipedia.org/api/rest_v1",
+      "tier": "REFERENCE",
+      "auth": "NONE",
+      "enabled": true,
+      "rate_limit": "200/sec, User-Agent required",
+      "cache_ttl_s": 86400,
+      "fallback": null,
+      "constraints": [],
+      "notes": null
+    },
+    {
+      "id": "wikidata_sparql",
+      "name": "Wikidata SPARQL",
+      "base_url": "https://query.wikidata.org/sparql",
+      "tier": "REFERENCE",
+      "auth": "NONE",
+      "enabled": true,
+      "rate_limit": "60s query timeout, concurrency capped",
+      "cache_ttl_s": 86400,
+      "fallback": "wikipedia_rest",
+      "constraints": [
+        "RATE_FRAGILE"
+      ],
+      "notes": "An unbounded SPARQL query is a self-inflicted denial of service. Queries must carry LIMIT."
+    },
+    {
+      "id": "arxiv",
+      "name": "arXiv API",
+      "base_url": "https://export.arxiv.org/api",
+      "tier": "REFERENCE",
+      "auth": "NONE",
+      "enabled": true,
+      "rate_limit": "1 per 3 seconds",
+      "cache_ttl_s": 86400,
+      "fallback": null,
+      "constraints": [
+        "RATE_FRAGILE"
+      ],
+      "notes": "HTTPS form. The 3-second floor is published and enforced."
+    },
+    {
+      "id": "crossref",
+      "name": "Crossref REST",
+      "base_url": "https://api.crossref.org",
+      "tier": "REFERENCE",
+      "auth": "NONE",
+      "enabled": true,
+      "rate_limit": "50/sec polite pool with mailto",
+      "cache_ttl_s": 86400,
+      "fallback": null,
+      "constraints": [],
+      "notes": "A mailto in the User-Agent moves requests to the polite pool."
+    },
+    {
+      "id": "rfc_editor",
+      "name": "RFC Editor",
+      "base_url": "https://www.rfc-editor.org/rfc",
+      "tier": "REFERENCE",
+      "auth": "NONE",
+      "enabled": true,
+      "rate_limit": "none published",
+      "cache_ttl_s": 604800,
+      "fallback": null,
+      "constraints": [],
+      "notes": "Immutable once published, hence the long TTL."
+    },
+    {
+      "id": "ncbi_eutils",
+      "name": "NCBI E-utilities",
+      "base_url": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils",
+      "tier": "SCIENCE",
+      "auth": "NONE",
+      "enabled": true,
+      "rate_limit": "3/sec without key, 10/sec with",
+      "cache_ttl_s": 86400,
+      "fallback": null,
+      "constraints": [
+        "RATE_FRAGILE"
+      ],
+      "notes": "Gene, protein, nucleotide, OMIM, taxonomy. NCBI blocks on sustained overrun."
+    },
+    {
+      "id": "ucsc_genome",
+      "name": "UCSC Genome Browser API",
+      "base_url": "https://api.genome.ucsc.edu",
+      "tier": "SCIENCE",
+      "auth": "NONE",
+      "enabled": true,
+      "rate_limit": "unspecified",
+      "cache_ttl_s": 86400,
+      "fallback": null,
+      "constraints": [],
+      "notes": "Assemblies, sequences, annotation tracks."
+    },
+    {
+      "id": "alliance_genome",
+      "name": "Alliance of Genome Resources",
+      "base_url": "https://www.alliancegenome.org/api",
+      "tier": "SCIENCE",
+      "auth": "NONE",
+      "enabled": true,
+      "rate_limit": "unspecified",
+      "cache_ttl_s": 86400,
+      "fallback": null,
+      "constraints": [],
+      "notes": "Cross-species gene, phenotype, disease associations."
+    },
+    {
+      "id": "gdc_open",
+      "name": "GDC open cancer genomics",
+      "base_url": "https://api.gdc.cancer.gov",
+      "tier": "SCIENCE",
+      "auth": "NONE",
+      "enabled": true,
+      "rate_limit": "unspecified",
+      "cache_ttl_s": 86400,
+      "fallback": null,
+      "constraints": [
+        "LICENCE_REVIEW"
+      ],
+      "notes": "Open tier only. Controlled-access GDC data requires dbGaP authorisation and is a different system."
+    },
+    {
+      "id": "public_apis_registry",
+      "name": "Public API registry",
+      "base_url": "https://api.publicapis.org",
+      "tier": "DISCOVERY",
+      "auth": "NONE",
+      "enabled": true,
+      "rate_limit": "unspecified",
+      "cache_ttl_s": 86400,
+      "fallback": null,
+      "constraints": [],
+      "notes": "Serves the adapt-to-any-external-protocol principle directly. Community registries are historically flaky; treat an outage as non-blocking."
+    },
+    {
+      "id": "registry_public_apis_live",
+      "name": "public-apis-live search",
+      "base_url": "https://api.public-apis-live.com/api",
+      "tier": "DISCOVERY",
+      "auth": "NONE",
+      "enabled": false,
+      "rate_limit": "60/min",
+      "cache_ttl_s": 3600,
+      "fallback": "public_apis_registry",
+      "constraints": [],
+      "notes": "Semantic search and health tracking across the registry. Confirm the host resolves and is maintained before enabling."
+    },
+    {
+      "id": "locale_countries",
+      "name": "REST Countries",
+      "base_url": "https://restcountries.com/v3.1",
+      "tier": "LOCALIZATION",
+      "auth": "NONE",
+      "enabled": true,
+      "rate_limit": "none published",
+      "cache_ttl_s": 604800,
+      "fallback": null,
+      "constraints": [],
+      "notes": null
+    },
+    {
+      "id": "locale_holidays_nager",
+      "name": "Nager.Date public holidays",
+      "base_url": "https://date.nager.at/api/v3",
+      "tier": "LOCALIZATION",
+      "auth": "NONE",
+      "enabled": true,
+      "rate_limit": "none published",
+      "cache_ttl_s": 86400,
+      "fallback": "locale_holidays_open",
+      "constraints": [],
+      "notes": "90+ countries."
+    },
+    {
+      "id": "locale_holidays_open",
+      "name": "OpenHolidays",
+      "base_url": "https://openholidaysapi.org",
+      "tier": "LOCALIZATION",
+      "auth": "NONE",
+      "enabled": true,
+      "rate_limit": "none published",
+      "cache_ttl_s": 86400,
+      "fallback": null,
+      "constraints": [],
+      "notes": "Regional and school holidays."
+    },
+    {
+      "id": "weather_open_meteo",
+      "name": "Open-Meteo",
+      "base_url": "https://api.open-meteo.com/v1",
+      "tier": "LOCALIZATION",
+      "auth": "NONE",
+      "enabled": true,
+      "rate_limit": "10000/day soft",
+      "cache_ttl_s": 1800,
+      "fallback": null,
+      "constraints": [],
+      "notes": "Forecast and air quality. Keyless."
+    },
+    {
+      "id": "locale_sunrise_sunset",
+      "name": "Sunrise-Sunset",
+      "base_url": "https://api.sunrise-sunset.org",
+      "tier": "LOCALIZATION",
+      "auth": "NONE",
+      "enabled": true,
+      "rate_limit": "none published",
+      "cache_ttl_s": 86400,
+      "fallback": null,
+      "constraints": [],
+      "notes": "Astronomical times derived from a date."
+    },
+    {
+      "id": "locale_worldtime",
+      "name": "WorldTimeAPI",
+      "base_url": "https://worldtimeapi.org/api",
+      "tier": "LOCALIZATION",
+      "auth": "NONE",
+      "enabled": true,
+      "rate_limit": "none published",
+      "cache_ttl_s": 60,
+      "fallback": null,
+      "constraints": [
+        "TIME_WITNESS"
+      ],
+      "notes": "One vote in the time quorum. Never authoritative alone; see time_policy."
+    },
+    {
+      "id": "locale_opentimezone",
+      "name": "OpenTimeZone",
+      "base_url": "https://api.opentimezone.com/api",
+      "tier": "LOCALIZATION",
+      "auth": "NONE",
+      "enabled": true,
+      "rate_limit": "none published",
+      "cache_ttl_s": 0,
+      "fallback": "locale_worldtime",
+      "constraints": [
+        "TIME_WITNESS"
+      ],
+      "notes": "One vote in the time quorum. Confirm the host is live at deployment."
+    },
+    {
+      "id": "media_met_museum",
+      "name": "Met Museum collection",
+      "base_url": "https://collectionapi.metmuseum.org/public/collection/v1",
+      "tier": "MEDIA",
+      "auth": "NONE",
+      "enabled": true,
+      "rate_limit": "80/sec",
+      "cache_ttl_s": 604800,
+      "fallback": null,
+      "constraints": [
+        "LICENCE_REVIEW"
+      ],
+      "notes": "The open-access subset is CC0; the rest is not. Check isPublicDomain per object."
+    },
+    {
+      "id": "media_openverse",
+      "name": "Openverse search",
+      "base_url": "https://api.openverse.org/v1",
+      "tier": "MEDIA",
+      "auth": "NONE",
+      "enabled": true,
+      "rate_limit": "100/day anonymous",
+      "cache_ttl_s": 86400,
+      "fallback": null,
+      "constraints": [
+        "LICENCE_REVIEW",
+        "RATE_FRAGILE"
+      ],
+      "notes": "Openly licensed media. Licence varies per result and must survive into any derived output."
+    },
+    {
+      "id": "media_rijksmuseum",
+      "name": "Rijksmuseum collection",
+      "base_url": "https://www.rijksmuseum.nl/api",
+      "tier": "MEDIA",
+      "auth": "API_KEY",
+      "enabled": false,
+      "rate_limit": "10000/day",
+      "cache_ttl_s": 604800,
+      "fallback": "media_met_museum",
+      "constraints": [
+        "LICENCE_REVIEW"
+      ],
+      "notes": null
+    },
+    {
+      "id": "biz_favicon",
+      "name": "Favicon resolution",
+      "base_url": "https://icons.duckduckgo.com/ip3",
+      "tier": "BUSINESS",
+      "auth": "NONE",
+      "enabled": true,
+      "rate_limit": "unspecified",
+      "cache_ttl_s": 604800,
+      "fallback": null,
+      "constraints": [],
+      "notes": null
+    },
+    {
+      "id": "fiat_frankfurter",
+      "name": "Frankfurter FX rates",
+      "base_url": "https://api.frankfurter.app",
+      "tier": "FINANCIAL",
+      "auth": "NONE",
+      "enabled": true,
+      "rate_limit": "none published",
+      "cache_ttl_s": 3600,
+      "fallback": null,
+      "constraints": [],
+      "notes": "ECB reference rates. Keyless, stable, no account."
+    },
+    {
+      "id": "crypto_coingecko",
+      "name": "CoinGecko public API",
+      "base_url": "https://api.coingecko.com/api/v3",
+      "tier": "FINANCIAL",
+      "auth": "NONE",
+      "enabled": true,
+      "rate_limit": "10-30/min on the free tier",
+      "cache_ttl_s": 60,
+      "fallback": "crypto_coinpaprika",
+      "constraints": [
+        "RATE_FRAGILE"
+      ],
+      "notes": null
+    },
+    {
+      "id": "crypto_coinpaprika",
+      "name": "CoinPaprika",
+      "base_url": "https://api.coinpaprika.com/v1",
+      "tier": "FINANCIAL",
+      "auth": "NONE",
+      "enabled": true,
+      "rate_limit": "20000/month",
+      "cache_ttl_s": 60,
+      "fallback": null,
+      "constraints": [],
+      "notes": null
+    },
+    {
+      "id": "comms_resend",
+      "name": "Resend transactional email",
+      "base_url": "https://api.resend.com",
+      "tier": "COMMS",
+      "auth": "API_KEY",
+      "enabled": false,
+      "rate_limit": "100/day, 3000/month",
+      "cache_ttl_s": 0,
+      "fallback": "comms_mailgun",
+      "constraints": [
+        "WRITE_EFFECT",
+        "PII"
+      ],
+      "notes": "The 100/day cap is hard and bursts need queue smoothing. Note 05's notification ladder is a plausible consumer."
+    },
+    {
+      "id": "comms_mailgun",
+      "name": "Mailgun",
+      "base_url": "https://api.mailgun.net/v3",
+      "tier": "COMMS",
+      "auth": "API_KEY",
+      "enabled": false,
+      "rate_limit": "100/day resetting",
+      "cache_ttl_s": 0,
+      "fallback": null,
+      "constraints": [
+        "WRITE_EFFECT",
+        "PII"
+      ],
+      "notes": null
+    },
+    {
+      "id": "identity_supabase_auth",
+      "name": "Supabase Auth",
+      "base_url": "https://supabase.co/auth/v1",
+      "tier": "IDENTITY",
+      "auth": "SERVICE_KEY",
+      "enabled": false,
+      "rate_limit": "100/min",
+      "cache_ttl_s": 0,
+      "fallback": "identity_clerk",
+      "constraints": [
+        "WRITE_EFFECT",
+        "PII"
+      ],
+      "notes": "The per-project host is templated; the fetch layer needs a substitution mechanism before this is reachable. 50k MAU free tier."
+    },
+    {
+      "id": "identity_clerk",
+      "name": "Clerk",
+      "base_url": "https://api.clerk.com/v1",
+      "tier": "IDENTITY",
+      "auth": "BEARER",
+      "enabled": false,
+      "rate_limit": "100/min",
+      "cache_ttl_s": 0,
+      "fallback": "identity_workos",
+      "constraints": [
+        "WRITE_EFFECT",
+        "PII"
+      ],
+      "notes": "50k MAU free, then per-MAU."
+    },
+    {
+      "id": "identity_workos",
+      "name": "WorkOS AuthKit",
+      "base_url": "https://api.workos.com",
+      "tier": "IDENTITY",
+      "auth": "API_KEY",
+      "enabled": false,
+      "rate_limit": "100/min",
+      "cache_ttl_s": 60,
+      "fallback": null,
+      "constraints": [
+        "WRITE_EFFECT",
+        "PII"
+      ],
+      "notes": "1M MAU free tier. Enterprise SSO connections bill separately per connection."
+    },
+    {
+      "id": "ai_openrouter",
+      "name": "OpenRouter inference",
+      "base_url": "https://openrouter.ai/api/v1",
+      "tier": "AI",
+      "auth": "BEARER",
+      "enabled": false,
+      "rate_limit": "plan-dependent",
+      "cache_ttl_s": 0,
+      "fallback": null,
+      "constraints": [
+        "MODEL_INFERENCE",
+        "WRITE_EFFECT"
+      ],
+      "notes": "Reachable by llm_prompt from a PROVISIONED agent whose contract names it. Not a role binding: TaskMaster owns role-to-model assignment under binding_strength."
+    },
+    {
+      "id": "time_timeapi_io",
+      "name": "TimeAPI.io",
+      "base_url": "https://timeapi.io/api",
+      "tier": "LOCALIZATION",
+      "auth": "NONE",
+      "enabled": true,
+      "rate_limit": "unspecified",
+      "cache_ttl_s": 0,
+      "fallback": "locale_worldtime",
+      "constraints": [
+        "TIME_WITNESS"
+      ],
+      "notes": "Independent operator. One vote."
+    },
+    {
+      "id": "time_cloudflare_trace",
+      "name": "Cloudflare trace",
+      "base_url": "https://cloudflare.com/cdn-cgi/trace",
+      "tier": "LOCALIZATION",
+      "auth": "NONE",
+      "enabled": true,
+      "rate_limit": "unspecified",
+      "cache_ttl_s": 0,
+      "fallback": null,
+      "constraints": [
+        "TIME_WITNESS"
+      ],
+      "notes": "Returns an epoch in ts=. Different operator and anycast network from the rest of the pool, which is what makes it worth a vote."
+    },
+    {
+      "id": "comms_postmark",
+      "name": "Postmark",
+      "base_url": "https://api.postmarkapp.com",
+      "tier": "COMMS",
+      "auth": "API_KEY",
+      "enabled": false,
+      "rate_limit": "none",
+      "cache_ttl_s": 0,
+      "fallback": null,
+      "constraints": [
+        "WRITE_EFFECT",
+        "PII"
+      ],
+      "notes": "100/mo non-expiring, unlimited domains. The developer tier that does not lapse."
+    },
+    {
+      "id": "comms_ses",
+      "name": "Amazon SES",
+      "base_url": "https://email.us-east-1.amazonaws.com",
+      "tier": "COMMS",
+      "auth": "AWS_SIGV4",
+      "enabled": false,
+      "rate_limit": "14/sec sandbox",
+      "cache_ttl_s": 0,
+      "fallback": "comms_postmark",
+      "constraints": [
+        "WRITE_EFFECT",
+        "PII"
+      ],
+      "notes": "Region is templated upstream; pinned here to us-east-1 until the fetch layer supports substitution. Requires domain warmup and sandbox exit."
+    },
+    {
+      "id": "comms_agentmail",
+      "name": "AgentMail",
+      "base_url": "https://api.agentmail.to/v1",
+      "tier": "COMMS",
+      "auth": "API_KEY",
+      "enabled": false,
+      "rate_limit": "dynamic",
+      "cache_ttl_s": 10,
+      "fallback": null,
+      "constraints": [
+        "WRITE_EFFECT",
+        "PII"
+      ],
+      "notes": "Per-agent inbox identity with RFC5322 threading and inbound webhooks. The most directly useful entry in the comms tier: it gives a provisioned agent its own addressable identity, which is a capability nothing else here provides."
+    },
+    {
+      "id": "comms_mailboxvalidator",
+      "name": "MailboxValidator",
+      "base_url": "https://api.mailboxvalidator.com/v2",
+      "tier": "COMMS",
+      "auth": "API_KEY",
+      "enabled": false,
+      "rate_limit": "60/min",
+      "cache_ttl_s": 86400,
+      "fallback": null,
+      "constraints": [
+        "PII"
+      ],
+      "notes": "Deliverability check. Read-only, so no WRITE_EFFECT \u2014 but an address submitted to a third party is still disclosure."
+    },
+    {
+      "id": "crypto_coinmarketcap",
+      "name": "CoinMarketCap",
+      "base_url": "https://pro-api.coinmarketcap.com/v1",
+      "tier": "FINANCIAL",
+      "auth": "API_KEY",
+      "enabled": false,
+      "rate_limit": "50/min",
+      "cache_ttl_s": 60,
+      "fallback": "crypto_coingecko",
+      "constraints": [
+        "COMPOUNDING"
+      ],
+      "notes": "15k credits/mo, but a multi-token or multi-fiat query consumes tens to hundreds per request. Budget by credit, not by call."
+    },
+    {
+      "id": "crypto_dexscreener",
+      "name": "DexScreener",
+      "base_url": "https://api.dexscreener.com/latest/dex",
+      "tier": "FINANCIAL",
+      "auth": "NONE",
+      "enabled": true,
+      "rate_limit": "60-300/min",
+      "cache_ttl_s": 10,
+      "fallback": "crypto_coingecko",
+      "constraints": [],
+      "notes": "Keyless, uncapped, real-time DEX pairs. The strongest free fallback in this tier."
+    }
+  ],
+  "pending_import": {
+    "_comment": [
+      "Ids from the upstream manifest whose endpoint records were still truncated",
+      "when this file was written. Listed rather than invented \u2014 a fabricated",
+      "base_url is an allowlist entry pointing somewhere nobody checked. Fill each",
+      "from the upstream file, then add it with enabled:false and its constraints.",
+      "Everything recoverable from the material received so far has been imported."
+    ],
+    "comms": [],
+    "financial": [
+      "crypto_ohlc_history",
+      "crypto_trending",
+      "banking_simulate_link",
+      "banking_get_transactions"
+    ],
+    "ai": [
+      "ai_generate_text",
+      "ai_generate_text_open",
+      "ai_generate_vision",
+      "ai_face_swap",
+      "ai_voice_clone",
+      "ai_lip_sync",
+      "ai_vectorize_raster",
+      "ai_background_remove"
+    ],
+    "security": [
+      "security_ip_reputation",
+      "security_scan_url",
+      "security_scan_file",
+      "security_domain_trust",
+      "security_generate_captcha"
+    ],
+    "business": [
+      "biz_get_logo",
+      "biz_search_domains",
+      "biz_find_email",
+      "biz_search_trademark",
+      "biz_validate_email_syntax",
+      "biz_company_enrich"
+    ],
+    "media": [
+      "media_noun_project",
+      "media_freepik_search",
+      "media_unsplash_free",
+      "media_icon_favicon_composite"
+    ],
+    "import_notes": {
+      "ai_*": "MODEL_INFERENCE where a model is called; the transform-only ones (vectorize, background remove) are image processing and need no marker.",
+      "ai_face_swap / ai_voice_clone / ai_lip_sync": "Impersonation capability. Legitimate in media production, abusable elsewhere. Import enabled:false with a documented use policy so the decision is on the record rather than implicit.",
+      "biz_find_email / biz_company_enrich": "PII.",
+      "banking_*": "Financial-data obligations well beyond an allowlist entry.",
+      "security_scan_file": "Uploads a file to a third party \u2014 WRITE_EFFECT plus a data-egress review."
+    }
+  },
+  "time_policy": {
+    "_comment": [
+      "Reducing time sources does not reduce the attack surface, it concentrates",
+      "it. One unauthenticated timestamp is a value an attacker on the path",
+      "chooses. A quorum across independent operators, networks, and",
+      "jurisdictions is something an attacker must own in aggregate.",
+      "",
+      "The cheapest witnesses are already here: every HTTPS response carries a",
+      "Date header. Thirty enabled sources is thirty independent observations at",
+      "no additional egress and no additional dependency. Dedicated time APIs",
+      "widen the pool further; they are not the foundation of it."
+    ],
+    "tiers": {
+      "SIGNED": "Roughtime and RFC 3161 responses over a fresh nonce. Authoritative on their own. Configured at deployment.",
+      "QUORUM": "Date headers harvested from every source contacted, plus dedicated time endpoints. Authoritative in agreement, per min_witnesses and max_spread_s.",
+      "OBSERVED": "A single unauthenticated reading. Display and timezone arithmetic only."
+    },
+    "min_witnesses": 5,
+    "max_spread_s": 30,
+    "outlier_rule": "Discard readings outside max_spread_s of the median, then require min_witnesses survivors. Fewer survivors yields UNANCHORED, never a guess.",
+    "elapsed_time": "Never measured by wall clock. The monotonic TPM clock decides every interval \u2014 countdown, lease expiry, grace. Quorum time anchors what o'clock it is; it does not measure duration.",
+    "harvest_date_headers": true
+  }
+}
