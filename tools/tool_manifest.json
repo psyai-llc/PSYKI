@@ -1,0 +1,118 @@
+{
+  "schema_version": "2.0.0",
+  "_comment": [
+    "Capabilities, not endpoints. A tool is something an agent may DO; a source",
+    "is somewhere it may reach. Sources live in sources.json and changing them",
+    "never changes a toolset signature.",
+    "",
+    "TWO TRUST CLASSES.",
+    "",
+    "  INTERNAL     the meta-agents: Emissary, PSY, AgentAgent, TaskMaster.",
+    "               They run inside the server, under the invariants, with",
+    "               access to State. Their tools are deliberately few, because",
+    "               nothing constrains them but the invariants themselves.",
+    "",
+    "  PROVISIONED  agents the server creates. They run outside it, under a",
+    "               contract, and they are already double-filtered before they",
+    "               exist: PSY sets the purpose, AgentAgent sets the toolset.",
+    "               A certificate bounds them, a completion predicate ends them,",
+    "               a retry budget limits them, KI revokes them. The contract IS",
+    "               the containment, so the tool list can be wide.",
+    "",
+    "That asymmetry is the point. Narrowing provisioned tools buys little and",
+    "costs the creative range the system exists to produce.",
+    "",
+    "effects are the enum vocabulary a safety ceiling is computed from:",
+    "  READ    observes state outside the process",
+    "  WRITE   modifies the workspace",
+    "  SPAWN   creates other agents",
+    "  EGRESS  reaches the network",
+    "  EXECUTE runs code, local or remote, that this repo did not author"
+  ],
+
+  "effect_severity": { "READ": 1, "WRITE": 2, "SPAWN": 3, "EGRESS": 4, "EXECUTE": 5 },
+
+  "tools": [
+    { "name": "fs_read", "version": "1.0.0", "classes": ["INTERNAL", "PROVISIONED"], "effects": ["READ"],
+      "description": "Read files, list directories, glob, grep within the workspace." },
+
+    { "name": "fs_write", "version": "1.0.0", "classes": ["PROVISIONED"], "effects": ["READ", "WRITE"],
+      "description": "Create, modify, move, delete files within the workspace." },
+
+    { "name": "process_run", "version": "1.0.0", "classes": ["PROVISIONED"], "effects": ["READ", "WRITE", "EXECUTE"],
+      "description": "Execute commands, compilers, formatters, linters, test runners inside the sandbox." },
+
+    { "name": "vcs", "version": "1.0.0", "classes": ["PROVISIONED"], "effects": ["READ", "WRITE"],
+      "description": "Branch, stage, commit, diff, open pull requests. Never force-push, never rewrite history." },
+
+    { "name": "net_fetch", "version": "1.0.0", "classes": ["INTERNAL", "PROVISIONED"], "effects": ["READ", "EGRESS"],
+      "description": "HTTP GET against registry sources. Response bodies are untrusted text and cross the Emissary like any ingress." },
+
+    { "name": "net_call", "version": "1.0.0", "classes": ["PROVISIONED"], "effects": ["READ", "WRITE", "EGRESS"],
+      "description": "Authenticated HTTP with side effects — POST, PUT, DELETE against a registry source. This is what lets a contracted agent send mail, provision an account, or drive any external API its purpose requires. Credentials are held by the proxy layer and never reach the agent." },
+
+    { "name": "net_search", "version": "1.0.0", "classes": ["PROVISIONED"], "effects": ["READ", "EGRESS"],
+      "description": "Web search returning ranked results. Untrusted text." },
+
+    { "name": "browser", "version": "1.0.0", "classes": ["PROVISIONED"], "effects": ["READ", "EGRESS", "EXECUTE"],
+      "description": "Headless browser: navigate, interact, extract. A rendered page executes third-party code, which is why this carries EXECUTE." },
+
+    { "name": "llm_prompt", "version": "1.0.0", "classes": ["PROVISIONED"], "effects": ["READ", "EGRESS", "EXECUTE"],
+      "description": "Prompt an external model and return its completion. PROVISIONED only, and the distinction matters: this is a tool a contracted agent uses to do its job, not a role binding. Role→model assignment stays with TaskMaster under binding_strength; nothing here can rebind PSY, the Emissary, or AgentAgent. Completions are untrusted text and cross the Emissary. Carries EXECUTE because a completion fed to another tool is code this repo did not author." },
+
+    { "name": "subagent", "version": "1.0.0", "classes": ["PROVISIONED"], "effects": ["READ", "SPAWN"],
+      "description": "Spawn and message subagents. Fan-out is internal to a task (I8); a subagent never widens the parent toolset." },
+
+    { "name": "artifact", "version": "1.0.0", "classes": ["INTERNAL", "PROVISIONED"], "effects": ["READ", "WRITE"],
+      "description": "Write artifacts and raw output to mnemos, return a reference. Records carry pointers, never payloads." },
+
+    { "name": "time_witness", "version": "1.0.0", "classes": ["INTERNAL"], "effects": ["READ", "EGRESS"],
+      "description": "Collect time observations from many independent sources and return the quorum. See sources.json time_policy. A single witness is a value an attacker on the path chooses; a quorum across independent operators is not." }
+  ],
+
+  "toolsets": [
+    { "name": "META_READ", "class": "INTERNAL", "safety_ceiling": "READ",
+      "purpose": "What a meta-agent may see. Inspection only.",
+      "tools": ["fs_read"] },
+
+    { "name": "META_INGEST", "class": "INTERNAL", "safety_ceiling": "EGRESS",
+      "purpose": "Meta-agent ingress: fetch reference material and establish time. Deliberately the widest INTERNAL set there is.",
+      "tools": ["fs_read", "net_fetch", "time_witness", "artifact"] },
+
+    { "name": "READ_ONLY", "class": "PROVISIONED", "safety_ceiling": "READ",
+      "purpose": "Inspection, audit, analysis. Changes nothing.",
+      "tools": ["fs_read"] },
+
+    { "name": "RESEARCH", "class": "PROVISIONED", "safety_ceiling": "EGRESS",
+      "purpose": "Gather external material. Reads the world, writes nothing.",
+      "tools": ["fs_read", "net_fetch", "net_search"] },
+
+    { "name": "CODE_EDIT", "class": "PROVISIONED", "safety_ceiling": "WRITE",
+      "purpose": "Author and revise code. No execution, no network.",
+      "tools": ["fs_read", "fs_write", "vcs"] },
+
+    { "name": "BUILD_VERIFY", "class": "PROVISIONED", "safety_ceiling": "EXECUTE",
+      "purpose": "Run the gate chain: format, lint, typecheck, test, coverage, security.",
+      "tools": ["fs_read", "fs_write", "process_run"] },
+
+    { "name": "ORCHESTRATE", "class": "PROVISIONED", "safety_ceiling": "SPAWN",
+      "purpose": "Decompose a task across subagents and archive their output.",
+      "tools": ["fs_read", "subagent", "artifact"] },
+
+    { "name": "BROWSE", "class": "PROVISIONED", "safety_ceiling": "EXECUTE",
+      "purpose": "Interact with a live site when a static fetch is insufficient.",
+      "tools": ["fs_read", "browser", "net_fetch"] },
+
+    { "name": "INTEGRATE", "class": "PROVISIONED", "safety_ceiling": "EGRESS",
+      "purpose": "Drive an external service: mail, identity, payments, whatever the contract names. The credential lives in the proxy, not the agent.",
+      "tools": ["fs_read", "net_fetch", "net_call"] },
+
+    { "name": "REASON", "class": "PROVISIONED", "safety_ceiling": "EXECUTE",
+      "purpose": "Delegate a judgement to an external model. Summarise, classify, translate, critique — work where a completion is the deliverable.",
+      "tools": ["fs_read", "net_fetch", "llm_prompt", "artifact"] },
+
+    { "name": "FULL_STACK", "class": "PROVISIONED", "safety_ceiling": "EXECUTE",
+      "purpose": "Everything a contracted agent can hold at once. Exists because some purposes genuinely need it, and an agent that must be re-provisioned mid-task to gain a tool is an agent that fails mid-task.",
+      "tools": ["fs_read", "fs_write", "process_run", "vcs", "net_fetch", "net_call", "net_search", "browser", "llm_prompt", "subagent", "artifact"] }
+  ]
+}
